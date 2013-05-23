@@ -1,8 +1,31 @@
 // Package mandrill gives a simple interface for sending email through
 // Mandrill's API, documented at https://mandrillapp.com/api/docs/.
 //
-// This is not a full implementation of the API and only provides some
-// essential calls.
+// This is not a full implementation of the API and only provides few essential
+// sending out emails.
+//
+// To use this package first set your API key:
+//
+//     mandrill.Key = "xxxx"
+//     // you can test your API key with Ping
+//     err := mandrill.Ping()
+//     // everything is OK if err is nil
+//
+//
+// It's easy to send a message:
+//
+//     msg := mandrill.NewMessage()
+//     msg.HTML = "HTML content"
+//     msg.Text = "plain text content" // optional
+//     msg.Subject = "subject"
+//     msg.FromEmail = "email@domain.com"
+//     msg.FromName = "your name"
+//     msg.AddRecipient("recipiend@domain.com", "recipient's name")
+//     res, err := msg.Send(fase)
+//
+// It's even easier to send a message using a template:
+//
+//     res, err := mandrill.SendTemplate(tmplName, data, to, toName)
 package mandrill
 
 import (
@@ -38,7 +61,7 @@ func do(url string, data interface{}, result interface{}) error {
 	err := newError()
 
 	rr := &restclient.RequestResponse{
-		Url:    "https://mandrillapp.com/api/1.0",
+		Url:    "https://mandrillapp.com/api/1.0" + url,
 		Method: "POST",
 		Data:   data,
 		Result: result,
@@ -48,6 +71,7 @@ func do(url string, data interface{}, result interface{}) error {
 	if status == 200 {
 		return nil
 	}
+	fmt.Println(status, rr.RawText)
 	return err
 }
 
@@ -59,4 +83,132 @@ func Ping() error {
 	}
 	data.Key = Key
 	return do("/users/ping", &data, nil)
+}
+
+// type SendResult holds information returned by send requests.
+type SendResult struct {
+	// email address of the recipient
+	Email string `json:"email"`
+	// the sending status
+	// either "sent", "queued", "rejected", or "invalid"
+	Status string `json:"status"`
+	// the reason for rejection if status is "rejected"
+	RejectionReason string `json:"reject_reason"`
+	// the message's unique id
+	Id string `json:"_id"`
+}
+
+// type To holds information about a recipient for a message.
+type To struct {
+	Email string `json:"email"`
+	Name  string `json:"name,omitempty"`
+}
+
+// type Message represents an email message for Mandrill.
+type Message struct {
+	// full HTML content to be sent
+	HTML string `json:"html,omitempty"`
+	// full plain text content to be sent
+	Text string `json:"text,omitempty"`
+	// the message subject
+	Subject string `json:"subject,omitempty"`
+	// the sender email address
+	FromEmail string `json:"from_email,omitempty"`
+	// name of the sender
+	FromName string `json:"from_name,omitempty"`
+	// recipient(s) information
+	To []*To `json:"to"`
+	// TODO implement other fields
+}
+
+// NewMessage returns a new instance of Message.
+func NewMessage() *Message {
+	return &Message{}
+}
+
+// AddRecipient adds a new recpipeint for msg.
+func (msg *Message) AddRecipient(email, name string) {
+	to := &To{email, name}
+	msg.To = append(msg.To, to)
+}
+
+// Send performs a send request for msg.
+func (msg *Message) Send(async bool) ([]*SendResult, error) {
+	// prepare request data
+	var data struct {
+		Key     string   `json:"key"`
+		Message *Message `json:"message,omitempty"`
+		Async   bool     `json:"async"`
+	}
+	data.Key = Key
+	data.Message = msg
+	data.Async = async
+
+	// perform the request
+	res := make([]*SendResult, 0)
+	err := do("/messages/send", &data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// SendTemplate performs a template-based send request for msg.
+func (msg *Message) SendTemplate(tmpl string, content map[string]string,
+	async bool) ([]*SendResult, error) {
+	// prepare request data
+	var data struct {
+		Key            string      `json:"key"`
+		TemplateName   string      `json:"template_name"`
+		TemplateConent []*tmplData `json:"template_content"`
+		Message        *Message    `json:"message,omitempty"`
+		Async          bool        `json:"async"`
+	}
+	data.Key = Key
+	data.TemplateName = tmpl
+	data.TemplateConent = newTmplContent(content)
+	data.Message = msg
+	data.Async = async
+
+	// perform the request
+	res := make([]*SendResult, 0)
+	err := do("/messages/send-template", &data, &res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// Type tmplData holds one piece of information for tepmate data. A complete
+// template content is a list of tmplData.
+type tmplData struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+// newTmplContent converts a map to a list of tmplData.
+func newTmplContent(m map[string]string) []*tmplData {
+	c := make([]*tmplData, 0, len(m))
+	for k, v := range m {
+		c = append(c, &tmplData{k, v})
+	}
+	return c
+}
+
+// SendTemplate is an easy function for sending one message to one recipient
+// using a template.
+func SendTemplate(name string, data map[string]string,
+	toEmail, toName string) ([]*SendResult, error) {
+	msg := NewMessage()
+	msg.AddRecipient(toEmail, toName)
+	return msg.SendTemplate(name, data, false)
+}
+
+// SendTemplateAsync is like SendTemplate, but is asynchronous.
+func SendTemplateAsync(name string, data map[string]string,
+	toEmail, toName string) error {
+	msg := NewMessage()
+	msg.AddRecipient(toEmail, toName)
+	_, err := msg.SendTemplate(name, data, true)
+	return err
 }
