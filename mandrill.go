@@ -14,18 +14,17 @@
 //
 // It's easy to send a message:
 //
-//     msg := mandrill.NewMessage()
+//     msg := mandrill.NewMessageTo("recipient@domain.com", "recipient's name")
 //     msg.HTML = "HTML content"
 //     msg.Text = "plain text content" // optional
 //     msg.Subject = "subject"
 //     msg.FromEmail = "email@domain.com"
 //     msg.FromName = "your name"
-//     msg.AddRecipient("recipiend@domain.com", "recipient's name")
 //     res, err := msg.Send(fase)
 //
 // It's even easier to send a message using a template:
 //
-//     res, err := mandrill.SendTemplate(tmplName, data, to, toName)
+//     res, err := mandrill.NewMessageTo(email, name).SendTemplate(tmplName, data, false)
 package mandrill
 
 import (
@@ -118,6 +117,8 @@ type Message struct {
 	FromName string `json:"from_name,omitempty"`
 	// recipient(s) information
 	To []*To `json:"to"`
+	// Mandrill tags
+	Tags []string `json:"tags,omitempty"`
 	// TODO implement other fields
 }
 
@@ -126,10 +127,22 @@ func NewMessage() *Message {
 	return &Message{}
 }
 
+// NewMessageTo makes a new message with specified recipient.
+func NewMessageTo(email, name string) *Message {
+	return NewMessage().AddRecipient(email, name)
+}
+
 // AddRecipient adds a new recpipeint for msg.
-func (msg *Message) AddRecipient(email, name string) {
+func (msg *Message) AddRecipient(email, name string) *Message {
 	to := &To{email, name}
 	msg.To = append(msg.To, to)
+	return msg
+}
+
+// AddTags does what it's name says.
+func (msg *Message) AddTags(tags ...string) *Message {
+	msg.Tags = append(msg.Tags, tags...)
+	return msg
 }
 
 // Send performs a send request for msg.
@@ -154,8 +167,7 @@ func (msg *Message) Send(async bool) ([]*SendResult, error) {
 }
 
 // SendTemplate performs a template-based send request for msg.
-func (msg *Message) SendTemplate(tmpl string, content map[string]string,
-	async bool) ([]*SendResult, error) {
+func (msg *Message) SendTemplate(tmpl string, content map[string]string, async bool) ([]*SendResult, error) {
 	// prepare request data
 	var data struct {
 		Key            string      `json:"key"`
@@ -193,22 +205,4 @@ func newTmplContent(m map[string]string) []*tmplData {
 		c = append(c, &tmplData{k, v})
 	}
 	return c
-}
-
-// SendTemplate is an easy function for sending one message to one recipient
-// using a template.
-func SendTemplate(name string, data map[string]string,
-	toEmail, toName string) ([]*SendResult, error) {
-	msg := NewMessage()
-	msg.AddRecipient(toEmail, toName)
-	return msg.SendTemplate(name, data, false)
-}
-
-// SendTemplateAsync is like SendTemplate, but is asynchronous.
-func SendTemplateAsync(name string, data map[string]string,
-	toEmail, toName string) error {
-	msg := NewMessage()
-	msg.AddRecipient(toEmail, toName)
-	_, err := msg.SendTemplate(name, data, true)
-	return err
 }
