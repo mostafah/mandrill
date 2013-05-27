@@ -117,6 +117,8 @@ type Message struct {
 	FromName string `json:"from_name,omitempty"`
 	// recipient(s) information
 	To []*To `json:"to"`
+	// global merge variables to use for all recipients
+	GlobalMergeVars []*variable `json:"global_merge_vars,omitempty"`
 	// Mandrill tags
 	Tags []string `json:"tags,omitempty"`
 	// TODO implement other fields
@@ -136,6 +138,12 @@ func NewMessageTo(email, name string) *Message {
 func (msg *Message) AddRecipient(email, name string) *Message {
 	to := &To{email, name}
 	msg.To = append(msg.To, to)
+	return msg
+}
+
+// AddGlobalMergeVars provides given data as merge vars with message.
+func (msg *Message) AddGlobalMergeVars(data map[string]string) *Message {
+	msg.GlobalMergeVars = append(msg.GlobalMergeVars, mapToVars(data)...)
 	return msg
 }
 
@@ -172,13 +180,13 @@ func (msg *Message) SendTemplate(tmpl string, content map[string]string, async b
 	var data struct {
 		Key            string      `json:"key"`
 		TemplateName   string      `json:"template_name"`
-		TemplateConent []*tmplData `json:"template_content"`
+		TemplateConent []*variable `json:"template_content"`
 		Message        *Message    `json:"message,omitempty"`
 		Async          bool        `json:"async"`
 	}
 	data.Key = Key
 	data.TemplateName = tmpl
-	data.TemplateConent = newTmplContent(content)
+	data.TemplateConent = mapToVars(content)
 	data.Message = msg
 	data.Async = async
 
@@ -191,18 +199,17 @@ func (msg *Message) SendTemplate(tmpl string, content map[string]string, async b
 	return res, nil
 }
 
-// Type tmplData holds one piece of information for tepmate data. A complete
-// template content is a list of tmplData.
-type tmplData struct {
+// Type variable holds one piece of data for dynamic content of messages.
+type variable struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 }
 
-// newTmplContent converts a map to a list of tmplData.
-func newTmplContent(m map[string]string) []*tmplData {
-	c := make([]*tmplData, 0, len(m))
+// mapToVars converts a map to a list variable.
+func mapToVars(m map[string]string) []*variable {
+	vars := make([]*variable, 0, len(m))
 	for k, v := range m {
-		c = append(c, &tmplData{k, v})
+		vars = append(vars, &variable{k, v})
 	}
-	return c
+	return vars
 }
