@@ -84,7 +84,7 @@ func Ping() error {
 	return do("/users/ping", &data, nil)
 }
 
-// type SendResult holds information returned by send requests.
+// Type SendResult holds information returned by send requests.
 type SendResult struct {
 	// email address of the recipient
 	Email string `json:"email"`
@@ -97,13 +97,13 @@ type SendResult struct {
 	Id string `json:"_id"`
 }
 
-// type To holds information about a recipient for a message.
+// Type To holds information about a recipient for a message.
 type To struct {
 	Email string `json:"email"`
 	Name  string `json:"name,omitempty"`
 }
 
-// type Message represents an email message for Mandrill.
+// Type Message represents an email message for Mandrill.
 type Message struct {
 	// full HTML content to be sent
 	HTML string `json:"html,omitempty"`
