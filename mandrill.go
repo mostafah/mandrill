@@ -131,7 +131,7 @@ type Message struct {
 	// per recipient metadata
 	RecipientMetadata []*RecipientMetadata `json:"recipient_metadata,omitempty"`
 	// the subaccount name to use
-	SubAccount string `json:"subaccount"`
+	SubAccount string `json:"subaccount,omitempty"`
 	// TODO implement other fields
 }
 
@@ -174,7 +174,7 @@ func (msg *Message) AddMetadataField(field string, value interface{}) *Message {
 }
 
 // AddRecipientMetadata adds a new recipient to the recipient metadata.
-func (msg *Message) AddRecipientMetadata(recipient string, metadata map[string]interface{}) *Message) {
+func (msg *Message) AddRecipientMetadata(recipient string, metadata map[string]interface{}) *Message {
 	rcptMetadata := &RecipientMetadata{recipient, metadata}
 	msg.RecipientMetadata = append(msg.RecipientMetadata, rcptMetadata)
 	return msg
