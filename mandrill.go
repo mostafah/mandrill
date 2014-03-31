@@ -103,6 +103,11 @@ type To struct {
 	Name  string `json:"name,omitempty"`
 }
 
+type RecipientMetadata struct {
+	Recipient string `json:"rcpt"`
+	Values map[string]interface{} `json:"values"`
+}
+
 // Type Message represents an email message for Mandrill.
 type Message struct {
 	// full HTML content to be sent
@@ -121,6 +126,12 @@ type Message struct {
 	GlobalMergeVars []*variable `json:"global_merge_vars,omitempty"`
 	// Mandrill tags
 	Tags []string `json:"tags,omitempty"`
+	// message message metadata
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	// per recipient metadata
+	RecipientMetadata []*RecipientMetadata `json:"recipient_metadata,omitempty"`
+	// the subaccount name to use
+	SubAccount string `json:"subaccount"`
 	// TODO implement other fields
 }
 
@@ -150,6 +161,28 @@ func (msg *Message) AddGlobalMergeVars(data map[string]string) *Message {
 // AddTags does what it's name says.
 func (msg *Message) AddTags(tags ...string) *Message {
 	msg.Tags = append(msg.Tags, tags...)
+	return msg
+}
+
+// AddMetadataField adds a new field/value to the metadata.
+func (msg *Message) AddMetadataField(field string, value interface{}) *Message {
+	if msg.Metadata == nil {
+		msg.Metadata = make(map[string]interface{})
+	}
+	msg.Metadata[field] = value
+	return msg
+}
+
+// AddRecipientMetadata adds a new recipient to the recipient metadata.
+func (msg *Message) AddRecipientMetadata(recipient string, metadata map[string]interface{}) *Message) {
+	rcptMetadata := &RecipientMetadata{recipient, metadata}
+	msg.RecipientMetadata = append(msg.RecipientMetadata, rcptMetadata)
+	return msg
+}
+
+// AddSubAccount will set the subaccount for the message to be delivered by.
+func (msg *Message) AddSubAccount(subaccount string) *Message {
+	msg.SubAccount = subaccount
 	return msg
 }
 
