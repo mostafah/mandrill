@@ -29,7 +29,7 @@ package mandrill
 
 import (
 	"fmt"
-	"github.com/jmcvetta/restclient"
+	"github.com/polds/restclient"
 )
 
 // API key for Mandrill user. You should set this to your API key before calling
