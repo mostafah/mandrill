@@ -31,7 +31,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/polds/restclient"
-	"net/http"
 )
 
 // API key for Mandrill user. You should set this to your API key before calling
@@ -52,10 +51,9 @@ type Error struct {
 // Name - the name of the attachment
 // Content - Base64 encoded string of file content
 type Attachment struct {
-	mime    string `json:"type"`
+	Mime    string `json:"type"`
 	Name    string `json:"name"`
-	Data    []byte
-	content string `json:"content"`
+	Content []byte `json:"content"`
 }
 
 // newError returns a new Error instance.
@@ -201,18 +199,19 @@ func (msg *Message) AddSubAccount(subaccount string) *Message {
 	return msg
 }
 
-// AddAttachments will add attachments to be sent via Mandrill
-// function accepts an (n) number of Attachments that contain
-// a file name and a data byte slice, from that content and mime type
-// are set using encoding/base64 and net/http
-func (msg *Message) AddAttachments(attachments ...*Attachment) *Message {
-	for _, attachment := range attachments {
-		data := attachment.Data
-		attachment.content = base64.StdEncoding.EncodeToString(data)
-		attachment.mime = http.DetectContentType(data)
-
-		msg.Attachments = append(msg.Attachments, attachment)
+// AddAttachment will add an attachment to be sent via Mandrill.
+// Function accepts a single attachment that contains
+// a file name a data byte slice and a mime time, from that content is
+// set using encoding/base64.
+// This function may be called multiple times to add additional attachments.
+func (msg *Message) AddAttachment(data []byte, name, mime string) *Message {
+	attachment := &Attachment{
+		Mime:    mime,
+		Name:    name,
+		Content: base64.StdEncoding.EncodeToString(data),
 	}
+
+	msg.Attachments = append(msg.Attachments, attachment)
 	return msg
 }
 
