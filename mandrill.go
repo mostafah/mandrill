@@ -53,7 +53,7 @@ type Error struct {
 type Attachment struct {
 	Mime    string `json:"type"`
 	Name    string `json:"name"`
-	Content []byte `json:"content"`
+	Content string `json:"content"`
 }
 
 // newError returns a new Error instance.
@@ -143,7 +143,7 @@ type Message struct {
 	RecipientMetadata []*RecipientMetadata `json:"recipient_metadata,omitempty"`
 	// the subaccount name to use
 	SubAccount string `json:"subaccount,omitempty"`
-	// attachements
+	// attachments
 	Attachments []*Attachment `json:"attachments,omitempty"`
 	// TODO implement other fields
 }
@@ -201,7 +201,7 @@ func (msg *Message) AddSubAccount(subaccount string) *Message {
 
 // AddAttachment will add an attachment to be sent via Mandrill.
 // Function accepts a single attachment that contains
-// a file name a data byte slice and a mime time, from that content is
+// a file name a data byte slice and a mime type, from that content is
 // set using encoding/base64.
 // This function may be called multiple times to add additional attachments.
 func (msg *Message) AddAttachment(data []byte, name, mime string) *Message {
