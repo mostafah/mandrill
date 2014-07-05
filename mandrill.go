@@ -28,8 +28,9 @@
 package mandrill
 
 import (
+	"encoding/base64"
 	"fmt"
-	"github.com/jmcvetta/restclient"
+	"github.com/polds/restclient"
 )
 
 // API key for Mandrill user. You should set this to your API key before calling
@@ -43,6 +44,16 @@ type Error struct {
 	Code    int    `json:"code"`
 	Name    string `json:"name"`
 	Message string `json:"message"`
+}
+
+// type Attachment holds necessary information for an attachment
+// Mime - the MIME type of the attachment
+// Name - the name of the attachment
+// Content - Base64 encoded string of file content
+type Attachment struct {
+	Mime    string `json:"type"`
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
 // newError returns a new Error instance.
@@ -104,8 +115,8 @@ type To struct {
 }
 
 type RecipientMetadata struct {
-	Recipient string `json:"rcpt"`
-	Values map[string]interface{} `json:"values"`
+	Recipient string                 `json:"rcpt"`
+	Values    map[string]interface{} `json:"values"`
 }
 
 // Type Message represents an email message for Mandrill.
@@ -132,6 +143,8 @@ type Message struct {
 	RecipientMetadata []*RecipientMetadata `json:"recipient_metadata,omitempty"`
 	// the subaccount name to use
 	SubAccount string `json:"subaccount,omitempty"`
+	// attachments
+	Attachments []*Attachment `json:"attachments,omitempty"`
 	// TODO implement other fields
 }
 
@@ -183,6 +196,22 @@ func (msg *Message) AddRecipientMetadata(recipient string, metadata map[string]i
 // AddSubAccount will set the subaccount for the message to be delivered by.
 func (msg *Message) AddSubAccount(subaccount string) *Message {
 	msg.SubAccount = subaccount
+	return msg
+}
+
+// AddAttachment will add an attachment to be sent via Mandrill.
+// Function accepts a single attachment that contains
+// a file name a data byte slice and a mime type, from that content is
+// set using encoding/base64.
+// This function may be called multiple times to add additional attachments.
+func (msg *Message) AddAttachment(data []byte, name, mime string) *Message {
+	attachment := &Attachment{
+		Mime:    mime,
+		Name:    name,
+		Content: base64.StdEncoding.EncodeToString(data),
+	}
+
+	msg.Attachments = append(msg.Attachments, attachment)
 	return msg
 }
 
