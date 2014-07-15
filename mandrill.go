@@ -30,7 +30,7 @@ package mandrill
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/polds/restclient"
+	"github.com/jmcvetta/napping"
 )
 
 // API key for Mandrill user. You should set this to your API key before calling
@@ -70,19 +70,22 @@ func (err *Error) Error() string {
 func do(url string, data interface{}, result interface{}) error {
 	err := newError()
 
-	rr := &restclient.RequestResponse{
+	rr := &napping.Request{
 		Url:    "https://mandrillapp.com/api/1.0" + url,
 		Method: "POST",
-		Data:   data,
+		Payload:   data,
 		Result: result,
 		Error:  err}
 
-	status, _ := restclient.Do(rr)
-	if status == 200 {
+	status, errs := napping.Send(rr)
+
+	if errs == nil {
 		return nil
 	}
-	fmt.Println(status, rr.RawText)
-	return err
+
+	fmt.Println(status, rr.Error)
+
+	return errs
 }
 
 // Ping validates your API key. Call this to make sure your API key is correct.
