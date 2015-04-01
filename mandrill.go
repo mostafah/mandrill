@@ -71,11 +71,11 @@ func do(url string, data interface{}, result interface{}) error {
 	err := newError()
 
 	rr := &napping.Request{
-		Url:    "https://mandrillapp.com/api/1.0" + url,
-		Method: "POST",
-		Payload:   data,
-		Result: result,
-		Error:  err}
+		Url:     "https://mandrillapp.com/api/1.0" + url,
+		Method:  "POST",
+		Payload: data,
+		Result:  result,
+		Error:   err}
 
 	status, errs := napping.Send(rr)
 
@@ -148,6 +148,8 @@ type Message struct {
 	SubAccount string `json:"subaccount,omitempty"`
 	// attachments
 	Attachments []*Attachment `json:"attachments,omitempty"`
+	// optional extra headers to add to the message (most headers are allowed)
+	Headers map[string]string `json:"headers,omitempty"`
 	// TODO implement other fields
 }
 
@@ -215,6 +217,23 @@ func (msg *Message) AddAttachment(data []byte, name, mime string) *Message {
 	}
 
 	msg.Attachments = append(msg.Attachments, attachment)
+	return msg
+}
+
+// AddHeader adds a header to a message
+func (msg *Message) AddHeader(name, value string) *Message {
+	if msg.Headers == nil {
+		msg.Headers = make(map[string]string)
+	}
+	msg.Headers[name] = value
+	return msg
+}
+
+// RemoveHeader removes a header from a message
+func (msg *Message) RemoveHeader(name string) *Message {
+	if msg.Headers != nil {
+		delete(msg.Headers, name)
+	}
 	return msg
 }
 
