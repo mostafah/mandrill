@@ -229,14 +229,6 @@ func (msg *Message) AddHeader(name, value string) *Message {
 	return msg
 }
 
-// RemoveHeader removes a header from a message
-func (msg *Message) RemoveHeader(name string) *Message {
-	if msg.Headers != nil {
-		delete(msg.Headers, name)
-	}
-	return msg
-}
-
 // Send performs a send request for msg.
 func (msg *Message) Send(async bool) ([]*SendResult, error) {
 	// prepare request data
