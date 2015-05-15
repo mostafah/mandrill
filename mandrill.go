@@ -20,7 +20,7 @@
 //     msg.Subject = "subject"
 //     msg.FromEmail = "email@domain.com"
 //     msg.FromName = "your name"
-//     res, err := msg.Send(fase)
+//     res, err := msg.Send(false)
 //
 // It's even easier to send a message using a template:
 //
