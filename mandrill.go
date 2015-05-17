@@ -20,7 +20,7 @@
 //     msg.Subject = "subject"
 //     msg.FromEmail = "email@domain.com"
 //     msg.FromName = "your name"
-//     res, err := msg.Send(fase)
+//     res, err := msg.Send(false)
 //
 // It's even easier to send a message using a template:
 //
@@ -150,6 +150,8 @@ type Message struct {
 	Attachments []*Attachment `json:"attachments,omitempty"`
 	// optional extra headers to add to the message (most headers are allowed)
 	Headers map[string]string `json:"headers,omitempty"`
+	// merge language to be used (can be mailchimp or handlebars)
+	MergeLanguage string `json:"merge_language,omitempty"`
 	// TODO implement other fields
 }
 
