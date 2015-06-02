@@ -58,24 +58,32 @@ func (err *Error) Error() string {
 
 // do is an easy function for performing requests against Mandrill's API.
 func do(url string, data interface{}, result interface{}) error {
-	err := newError()
-
+	// merr can store a the JSON object returned by mandrill on errors
+	merr := newError()
+	// prepare and send the request
 	rr := &napping.Request{
 		Url:     "https://mandrillapp.com/api/1.0" + url,
 		Method:  "POST",
 		Payload: data,
 		Result:  result,
-		Error:   err}
+		Error:   merr}
+	res, err := napping.Send(rr)
 
-	status, errs := napping.Send(rr)
-
-	if errs == nil {
-		return nil
+	// network error
+	if err != nil {
+		return err
 	}
-
-	fmt.Println(status, rr.Error)
-
-	return errs
+	// mandrill error
+	if res.Status() != 200 {
+		if merr != nil {
+			return merr
+		} else {
+			// a return JSON was not found/parsed
+			fmt.Errorf("mandrill: unknown error happened")
+		}
+	}
+	// no error happened
+	return nil
 }
 
 // Ping validates your API key. Call this to make sure your API key is correct.
