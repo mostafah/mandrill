@@ -46,16 +46,6 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// type Attachment holds necessary information for an attachment
-// Mime - the MIME type of the attachment
-// Name - the name of the attachment
-// Content - Base64 encoded string of file content
-type Attachment struct {
-	Mime    string `json:"type"`
-	Name    string `json:"name"`
-	Content string `json:"content"`
-}
-
 // newError returns a new Error instance.
 func newError() *Error {
 	return &Error{}
@@ -120,6 +110,16 @@ type To struct {
 type RecipientMetadata struct {
 	Recipient string                 `json:"rcpt"`
 	Values    map[string]interface{} `json:"values"`
+}
+
+// type Attachment holds necessary information for an attachment
+// Mime - the MIME type of the attachment
+// Name - the name of the attachment
+// Content - Base64 encoded string of file content
+type Attachment struct {
+	Mime    string `json:"type"`
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
 // Type Message represents an email message for Mandrill.
