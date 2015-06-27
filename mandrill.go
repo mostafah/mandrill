@@ -264,15 +264,15 @@ func (msg *Message) Send(async bool) ([]*SendResult, error) {
 func (msg *Message) SendTemplate(tmpl string, content map[string]string, async bool) ([]*SendResult, error) {
 	// prepare request data
 	var data struct {
-		Key            string      `json:"key"`
-		TemplateName   string      `json:"template_name"`
-		TemplateConent []*variable `json:"template_content"`
-		Message        *Message    `json:"message,omitempty"`
-		Async          bool        `json:"async"`
+		Key             string      `json:"key"`
+		TemplateName    string      `json:"template_name"`
+		TemplateContent []*variable `json:"template_content"`
+		Message         *Message    `json:"message,omitempty"`
+		Async           bool        `json:"async"`
 	}
 	data.Key = Key
 	data.TemplateName = tmpl
-	data.TemplateConent = mapToVars(content)
+	data.TemplateContent = mapToVars(content)
 	data.Message = msg
 	data.Async = async
 
