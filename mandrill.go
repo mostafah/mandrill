@@ -38,6 +38,30 @@ import (
 // Mandrill account settings.
 var Key string
 
+// API default urls for mandrill messages
+const (
+	MessageSendURL         = "/messages/send"
+	MessageSendTemplateURL = "/messages/send-template"
+)
+
+// MessageFieldOptions for adding new optional fields for the sent message
+type MessageFieldOptions struct {
+	// url field represents the url of the service endpoint
+	url string
+}
+
+// MessageOptions is the return type form the function SetMessageURL
+type MessageOptions func(MessageFieldOptions) error
+
+// SetMessageUrl function set the url of the service endpoint and if its not used the default endpoint
+// will be taken
+func SetMessageUrl(url string) MessageOptions {
+	return func(mo MessageFieldOptions) error {
+		mo.url = url
+		return nil
+	}
+}
+
 // type Error holds error return messages from API calls.
 type Error struct {
 	Status  string `json:"status"`
@@ -240,7 +264,7 @@ func (msg *Message) AddHeader(name, value string) *Message {
 }
 
 // Send performs a send request for msg.
-func (msg *Message) Send(async bool) ([]*SendResult, error) {
+func (msg *Message) Send(async bool, options ...MessageOptions) ([]*SendResult, error) {
 	// prepare request data
 	var data struct {
 		Key     string   `json:"key"`
@@ -250,10 +274,21 @@ func (msg *Message) Send(async bool) ([]*SendResult, error) {
 	data.Key = Key
 	data.Message = msg
 	data.Async = async
+	m := MessageFieldOptions{}
+	// assigning the messageOptions to the custom url
+	for _, opt := range options {
+		if err := opt(m); err != nil {
+			return nil, err
+		}
+	}
+	var url string
+	if m.url == "" {
+		url = "/messages/send"
+	}
 
 	// perform the request
 	res := make([]*SendResult, 0)
-	err := do("/messages/send", &data, &res)
+	err := do(url, &data, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +296,7 @@ func (msg *Message) Send(async bool) ([]*SendResult, error) {
 }
 
 // SendTemplate performs a template-based send request for msg.
-func (msg *Message) SendTemplate(tmpl string, content map[string]string, async bool) ([]*SendResult, error) {
+func (msg *Message) SendTemplate(tmpl string, content map[string]string, async bool, options ...MessageOptions) ([]*SendResult, error) {
 	// prepare request data
 	var data struct {
 		Key             string      `json:"key"`
@@ -275,10 +310,21 @@ func (msg *Message) SendTemplate(tmpl string, content map[string]string, async b
 	data.TemplateContent = mapToVars(content)
 	data.Message = msg
 	data.Async = async
+	m := MessageFieldOptions{}
+	// assigning the messageOptions to the custom url
+	for _, opt := range options {
+		if err := opt(m); err != nil {
+			return nil, err
+		}
+	}
+	var url string
+	if m.url == "" {
+		url = "/messages/send-template"
+	}
 
 	// perform the request
 	res := make([]*SendResult, 0)
-	err := do("/messages/send-template", &data, &res)
+	err := do(url, &data, &res)
 	if err != nil {
 		return nil, err
 	}
