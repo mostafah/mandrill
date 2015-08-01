@@ -181,7 +181,7 @@ func (msg *Message) AddRecipient(email, name string) *Message {
 }
 
 // AddGlobalMergeVars provides given data as merge vars with message.
-func (msg *Message) AddGlobalMergeVars(data map[string]string) *Message {
+func (msg *Message) AddGlobalMergeVars(data map[string]interface{}) *Message {
 	msg.GlobalMergeVars = append(msg.GlobalMergeVars, mapToVars(data)...)
 	return msg
 }
@@ -270,9 +270,10 @@ func (msg *Message) SendTemplate(tmpl string, content map[string]string, async b
 		Message         *Message    `json:"message,omitempty"`
 		Async           bool        `json:"async"`
 	}
+
 	data.Key = Key
 	data.TemplateName = tmpl
-	data.TemplateContent = mapToVars(content)
+	data.TemplateContent = mapToStringVars(content)
 	data.Message = msg
 	data.Async = async
 
@@ -287,15 +288,23 @@ func (msg *Message) SendTemplate(tmpl string, content map[string]string, async b
 
 // Type variable holds one piece of data for dynamic content of messages.
 type variable struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	Name    string      `json:"name"`
+	Content interface{} `json:"content"`
 }
 
 // mapToVars converts a map to a list variable.
-func mapToVars(m map[string]string) []*variable {
+func mapToVars(m map[string]interface{}) []*variable {
 	vars := make([]*variable, 0, len(m))
 	for k, v := range m {
 		vars = append(vars, &variable{k, v})
 	}
 	return vars
+}
+
+func mapToStringVars(m map[string]string) []*variable {
+	mGeneric := make(map[string]interface{})
+	for k, v := range m {
+		mGeneric[k] = v
+	}
+	return mapToVars(mGeneric)
 }
