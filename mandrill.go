@@ -30,6 +30,7 @@ package mandrill
 import (
 	"encoding/base64"
 	"fmt"
+
 	"github.com/jmcvetta/napping"
 )
 
@@ -113,6 +114,7 @@ type SendResult struct {
 type To struct {
 	Email string `json:"email"`
 	Name  string `json:"name,omitempty"`
+	Type  string `json:"type,omitempty"`
 }
 
 type RecipientMetadata struct {
@@ -175,7 +177,14 @@ func NewMessageTo(email, name string) *Message {
 
 // AddRecipient adds a new recpipeint for msg.
 func (msg *Message) AddRecipient(email, name string) *Message {
-	to := &To{email, name}
+	to := &To{email, name, ""}
+	msg.To = append(msg.To, to)
+	return msg
+}
+
+// AddRecipientType adds a new recpipeint for msg with specified type.
+func (msg *Message) AddRecipientType(email, name, rtype string) *Message {
+	to := &To{email, name, rtype}
 	msg.To = append(msg.To, to)
 	return msg
 }
