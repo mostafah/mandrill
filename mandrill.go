@@ -109,11 +109,19 @@ type SendResult struct {
 	Id string `json:"_id"`
 }
 
+type RecipientType string
+
+var (
+	RecipientTo  RecipientType = "to"
+	RecipientCC  RecipientType = "cc"
+	RecipientBCC RecipientType = "bcc"
+)
+
 // Type To holds information about a recipient for a message.
 type To struct {
-	Email string `json:"email"`
-	Name  string `json:"name,omitempty"`
-	Type  string `json:"type,omitempty"`
+	Email string        `json:"email"`
+	Name  string        `json:"name,omitempty"`
+	Type  RecipientType `json:"type,omitempty"`
 }
 
 type RecipientMetadata struct {
@@ -176,13 +184,11 @@ func NewMessageTo(email, name string) *Message {
 
 // AddRecipient adds a new recpipeint for msg.
 func (msg *Message) AddRecipient(email, name string) *Message {
-	to := &To{email, name, ""}
-	msg.To = append(msg.To, to)
-	return msg
+	return msg.AddRecipientType(email, name, RecipientTo)
 }
 
 // AddRecipientType adds a new recpipeint for msg with specified type.
-func (msg *Message) AddRecipientType(email, name, typ string) *Message {
+func (msg *Message) AddRecipientType(email, name string, typ RecipientType) *Message {
 	to := &To{email, name, typ}
 	msg.To = append(msg.To, to)
 	return msg
