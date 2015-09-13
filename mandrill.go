@@ -182,8 +182,8 @@ func (msg *Message) AddRecipient(email, name string) *Message {
 }
 
 // AddRecipientType adds a new recpipeint for msg with specified type.
-func (msg *Message) AddRecipientType(email, name, rtype string) *Message {
-	to := &To{email, name, rtype}
+func (msg *Message) AddRecipientType(email, name, typ string) *Message {
+	to := &To{email, name, typ}
 	msg.To = append(msg.To, to)
 	return msg
 }
