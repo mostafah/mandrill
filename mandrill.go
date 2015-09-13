@@ -30,7 +30,6 @@ package mandrill
 import (
 	"encoding/base64"
 	"fmt"
-
 	"github.com/jmcvetta/napping"
 )
 
