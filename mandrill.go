@@ -184,6 +184,16 @@ type Message struct {
 	Headers map[string]string `json:"headers,omitempty"`
 	// merge language to be used (can be mailchimp or handlebars)
 	MergeLanguage string `json:"merge_language,omitempty"`
+	// whether or not this message is important, and should be delivered ahead of non-important messages
+	Important bool `json:"important,omitempty"`
+	// a custom domain to use for tracking opens and clicks instead of mandrillapp.com
+	TrackingDomain string `json:"tracking_domain,omitempty"`
+	// a custom domain to use for SPF/DKIM signing instead of mandrill (for "via" or "on behalf of" in email clients)
+	SigningDomain string `json:"signing_domain,omitempty"`
+	//a custom domain to use for the messages's return-path
+	ReturnPathDomain string `json:"return_path_domain,omitempty"`
+	//whether to evaluate merge tags in the message. Will automatically be set to true if either merge_vars or global_merge_vars are provided.
+	Merge bool `json:"merge,omitempty"`
 	// TODO implement other fields
 }
 
