@@ -38,6 +38,30 @@ import (
 // Mandrill account settings.
 var Key string
 
+// API default urls for mandrill messages
+const (
+	MessageSendURL         = "https://mandrillapp.com/api/1.0/messages/send"
+	MessageSendTemplateURL = "https://mandrillapp.com/api/1.0/messages/send-template"
+)
+
+// MessageFieldOptions for adding new optional fields for the sent message
+type MessageFieldOptions struct {
+	// url field represents the url of the service endpoint
+	url string
+}
+
+// MessageOptions is the return type form the function SetMessageURL
+type MessageOptions func(*MessageFieldOptions) error
+
+// SetMessageUrl function set the url of the service endpoint and if its not used the default endpoint
+// will be taken
+func SetMessageUrl(url string) MessageOptions {
+	return func(mo *MessageFieldOptions) error {
+		mo.url = url
+		return nil
+	}
+}
+
 // type Error holds error return messages from API calls.
 type Error struct {
 	Status  string `json:"status"`
@@ -62,7 +86,7 @@ func do(url string, data interface{}, result interface{}) error {
 	merr := newError()
 	// prepare and send the request
 	rr := &napping.Request{
-		Url:     "https://mandrillapp.com/api/1.0" + url,
+		Url:     url,
 		Method:  "POST",
 		Payload: data,
 		Result:  result,
@@ -169,6 +193,16 @@ type Message struct {
 	Headers map[string]string `json:"headers,omitempty"`
 	// merge language to be used (can be mailchimp or handlebars)
 	MergeLanguage string `json:"merge_language,omitempty"`
+	// whether or not this message is important, and should be delivered ahead of non-important messages
+	Important bool `json:"important,omitempty"`
+	// a custom domain to use for tracking opens and clicks instead of mandrillapp.com
+	TrackingDomain string `json:"tracking_domain,omitempty"`
+	// a custom domain to use for SPF/DKIM signing instead of mandrill (for "via" or "on behalf of" in email clients)
+	SigningDomain string `json:"signing_domain,omitempty"`
+	//a custom domain to use for the messages's return-path
+	ReturnPathDomain string `json:"return_path_domain,omitempty"`
+	//whether to evaluate merge tags in the message. Will automatically be set to true if either merge_vars or global_merge_vars are provided.
+	Merge bool `json:"merge,omitempty"`
 	// TODO implement other fields
 }
 
@@ -254,7 +288,7 @@ func (msg *Message) AddHeader(name, value string) *Message {
 }
 
 // Send performs a send request for msg.
-func (msg *Message) Send(async bool) ([]*SendResult, error) {
+func (msg *Message) Send(async bool, options ...MessageOptions) ([]*SendResult, error) {
 	// prepare request data
 	var data struct {
 		Key     string   `json:"key"`
@@ -264,10 +298,22 @@ func (msg *Message) Send(async bool) ([]*SendResult, error) {
 	data.Key = Key
 	data.Message = msg
 	data.Async = async
-
+	m := &MessageFieldOptions{}
+	// assigning the messageOptions to the custom url
+	for _, opt := range options {
+		if err := opt(m); err != nil {
+			return nil, err
+		}
+	}
+	var url string
+	if m.url == "" {
+		url = MessageSendURL
+	} else {
+		url = m.url
+	}
 	// perform the request
 	res := make([]*SendResult, 0)
-	err := do("/messages/send", &data, &res)
+	err := do(url, &data, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +321,7 @@ func (msg *Message) Send(async bool) ([]*SendResult, error) {
 }
 
 // SendTemplate performs a template-based send request for msg.
-func (msg *Message) SendTemplate(tmpl string, content map[string]string, async bool) ([]*SendResult, error) {
+func (msg *Message) SendTemplate(tmpl string, content map[string]string, async bool, options ...MessageOptions) ([]*SendResult, error) {
 	// prepare request data
 	var data struct {
 		Key             string      `json:"key"`
@@ -290,10 +336,23 @@ func (msg *Message) SendTemplate(tmpl string, content map[string]string, async b
 	data.TemplateContent = mapToStringVars(content)
 	data.Message = msg
 	data.Async = async
+	m := &MessageFieldOptions{}
+	// assigning the messageOptions to the custom url
+	for _, opt := range options {
+		if err := opt(m); err != nil {
+			return nil, err
+		}
+	}
+	var url string
+	if m.url == "" {
+		url = MessageSendTemplateURL
+	} else {
+		url = m.url
+	}
 
 	// perform the request
 	res := make([]*SendResult, 0)
-	err := do("/messages/send-template", &data, &res)
+	err := do(url, &data, &res)
 	if err != nil {
 		return nil, err
 	}
